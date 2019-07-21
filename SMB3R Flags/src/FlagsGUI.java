@@ -6,6 +6,10 @@ import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 import java.awt.event.ActionEvent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -13,6 +17,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+
 import java.awt.Color;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -23,7 +29,11 @@ public class FlagsGUI {
 	private JFrame frmSmbrFlagsRandomizer;
 	private JTextField textField;
 	private final JLabel lblCopiedToClipboard = new JLabel("Copied to Clipboard!");
-
+	
+	public static File flagsRandoDir;
+	public static File randoDir;
+	public static File randoFile;
+	
 	/**
 	 * Launch the application.
 	 */
@@ -31,16 +41,42 @@ public class FlagsGUI {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					File file = new File("Mario3Randomizer.exe");
-					if(! file.exists()) {
-						JOptionPane.showMessageDialog(null, 
-	                              "Error: Mario3Randomizer.exe not found.\nPlease ensure the Flags Randomizer is located in the same directory as Fred's SMB3 Randomizer", 
-	                              "Error", 
-	                              JOptionPane.WARNING_MESSAGE);
-						System.exit(0);
+					flagsRandoDir = new File("");
+					System.out.println("flagsRandoDir: " + flagsRandoDir.getAbsolutePath());
+					
+					Properties prop = loadProp();
+					String smb3rDir = prop.getProperty("smb3rdir");
+					if(smb3rDir == null) {
+						//First time setup assumed
+					
+						if(! setRandomizerDirectory()) {
+							System.exit(0);
+						}
+						else {
+							prop.setProperty("smb3rdir", randoDir.getAbsolutePath());
+							saveProp(prop);
+						}
 					}
-					FlagsGUI window = new FlagsGUI();
-					window.frmSmbrFlagsRandomizer.setVisible(true);
+					else {
+						randoDir = new File(smb3rDir);
+						System.out.println(randoDir);
+						
+						randoFile = new File(randoDir + "/Mario3Randomizer.exe");
+						if(! randoFile.exists()) {
+							//Rando directory changed since last startup
+							
+							if(! setRandomizerDirectory()) {
+								System.exit(0);
+							}
+							else {
+								prop.setProperty("smb3rdir", randoDir.getAbsolutePath());
+								saveProp(prop);
+							}
+						}
+					}
+						FlagsGUI window = new FlagsGUI();
+						window.frmSmbrFlagsRandomizer.setVisible(true);
+						
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -60,7 +96,7 @@ public class FlagsGUI {
 	 */
 	private void initialize() {
 		frmSmbrFlagsRandomizer = new JFrame();
-		frmSmbrFlagsRandomizer.setTitle("SMB3R Flags Randomizer 1.1");
+		frmSmbrFlagsRandomizer.setTitle("SMB3R Flags Randomizer 1.2");
 		frmSmbrFlagsRandomizer.setBounds(100, 100, 426, 301);
 		frmSmbrFlagsRandomizer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
@@ -96,11 +132,12 @@ public class FlagsGUI {
 				clipboard.setContents(new StringSelection(s), null);
 				lblCopiedToClipboard.setVisible(true);
 				
-				File file = new File("Mario3Randomizer.exe");
-				System.out.println("File: "+ file.getAbsolutePath());
-				if(file.exists()) {
+				System.out.println("File: "+ randoFile.getAbsolutePath());
+				if(randoFile.exists()) {
 					System.out.println("Generating rom...");
 					ProcessBuilder pb = new ProcessBuilder("Generator.exf");
+					pb.directory(flagsRandoDir.getAbsoluteFile());
+					System.out.println(pb.directory());
 					try {
 						Process p = pb.start();
 						p.waitFor();
@@ -125,7 +162,7 @@ public class FlagsGUI {
 		panel.add(textField);
 		textField.setColumns(10);
 		lblCopiedToClipboard.setFont(new Font("Tahoma", Font.BOLD, 12));
-		lblCopiedToClipboard.setForeground(new Color(0, 255, 0));
+		lblCopiedToClipboard.setForeground(new Color(0, 128, 0));
 		lblCopiedToClipboard.setBounds(131, 230, 134, 14);
 		lblCopiedToClipboard.setVisible(false);
 		
@@ -322,5 +359,53 @@ public class FlagsGUI {
 		
 		String flag = Long.toString(value, 36).toUpperCase();
 		return flag.replace("O", "!");
+	}
+	
+	public static boolean setRandomizerDirectory() {
+		
+		JFileChooser j = new JFileChooser();
+		j.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		j.setCurrentDirectory(flagsRandoDir);
+		j.setDialogTitle("Select SMB3 Randomizer Directory");
+		if(j.showOpenDialog(null) == j.APPROVE_OPTION) {
+			randoDir = j.getSelectedFile();
+			System.out.println(randoDir);
+
+			randoFile = new File(randoDir + "/Mario3Randomizer.exe");
+			if(! randoFile.exists()) {
+				JOptionPane.showMessageDialog(null, 
+                          "Error: Mario3Randomizer.exe not found", 
+                          "Error", 
+                          JOptionPane.WARNING_MESSAGE);
+				return false;
+			}
+		}
+		else {
+			JOptionPane.showMessageDialog(null, 
+                      "Error: Mario3Randomizer.exe not found", 
+                      "Error", 
+                      JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
+		
+		return true;
+	}
+	
+	public static void saveProp(Properties prop) throws IOException {
+		prop.store(new FileOutputStream("config.prop"), null);
+	}
+	
+	public static Properties loadProp() throws IOException {
+		Properties prop = new Properties();
+		FileInputStream in;
+		try {
+			in = new FileInputStream("config.prop");
+			prop.load(in);
+			
+		} catch (IOException e) {
+			saveProp(prop);
+		}
+		
+		return prop;
 	}
 }
