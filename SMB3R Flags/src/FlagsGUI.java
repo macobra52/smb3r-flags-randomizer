@@ -5,10 +5,12 @@ import javax.swing.JButton;
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.awt.event.ActionEvent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JCheckBox;
 import java.awt.Color;
@@ -29,6 +31,14 @@ public class FlagsGUI {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
+					File file = new File("Mario3Randomizer.exe");
+					if(! file.exists()) {
+						JOptionPane.showMessageDialog(null, 
+	                              "Error: Mario3Randomizer.exe not found.\nPlease ensure the Flags Randomizer is located in the same directory as Fred's SMB3 Randomizer", 
+	                              "Error", 
+	                              JOptionPane.WARNING_MESSAGE);
+						System.exit(0);
+					}
 					FlagsGUI window = new FlagsGUI();
 					window.frmSmbrFlagsRandomizer.setVisible(true);
 				} catch (Exception e) {
@@ -61,7 +71,7 @@ public class FlagsGUI {
 		JTextArea txtrFlagsRandomizerBy = new JTextArea();
 		txtrFlagsRandomizerBy.setBounds(10, 11, 390, 112);
 		txtrFlagsRandomizerBy.setEditable(false);
-		txtrFlagsRandomizerBy.setText("SMB3R Flags Randomizer by MaCobra52\r\n1. Click 'Surprise Me!' to produce a random SMB3R flagset.\r\n2. Paste the flagset into Fred's SMB3 Randomizer. (no peeking!)\r\n3. Click Generate and Play!\r\n\r\nSee Readme for full details on implementation. Enjoy!");
+		txtrFlagsRandomizerBy.setText("SMB3R Flags Randomizer by MaCobra52\r\nCompatible only with fcoughlin's (Fred's) SMB3 Randomizer\r\n\r\nNow entirely automatic! Just click 'Surprise Me!' and Enjoy!\r\nSee Readme for full details on implementation.");
 		panel.add(txtrFlagsRandomizerBy);
 		
 		JCheckBox chckbxIncludePermanentMario = new JCheckBox("Include chance for Permanent Mario");
@@ -85,6 +95,22 @@ public class FlagsGUI {
 				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 				clipboard.setContents(new StringSelection(s), null);
 				lblCopiedToClipboard.setVisible(true);
+				
+				File file = new File("Mario3Randomizer.exe");
+				System.out.println("File: "+ file.getAbsolutePath());
+				if(file.exists()) {
+					System.out.println("Generating rom...");
+					ProcessBuilder pb = new ProcessBuilder("Generator.exf");
+					try {
+						Process p = pb.start();
+						p.waitFor();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				else {
+					System.out.println("SMB3 Randomizer not found. Manual generation required");
+				}
 			}
 		});
 		
