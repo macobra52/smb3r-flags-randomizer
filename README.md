@@ -8,11 +8,10 @@ Notes:
 
 Instructions:
 
-1. Extract all files to the same location as Fred's SMB3 Randomizer
-2. Double Click "SMB3R Flags Randomizer.exe"
+1. Double Click "SMB3R Flags Randomizer.exe"
+2. If this is your first time running the Flags Randomizer, navigate to the folder where SMB3 Randomizer is installed.
 3. Click "Surprise Me!" to generate a random flagset. The program will automatically decide on the flags and generate a randomized rom for you.
-4. Enjoy!
-
+4. Enjoy! 
 
 How it works:
 
@@ -74,4 +73,3 @@ V1.1
 -Added Big Mario to Permanent Mario randomization and tweaked odds for each status
 -Added option to randomize One Hit Knockout flag (25% chance of being enabled if selected)
 -Tweaked scoring algorithm. Generated flags should be more random in general now.
-
